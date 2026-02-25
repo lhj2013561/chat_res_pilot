@@ -177,7 +177,7 @@ class Chatpage1_answer(Page):
     form_fields = ['q1_1', 'q1_2', 'q1_3', 'q1_4', 'q1_5', 'q1_6','q1_feedback']
 
 #두번째 대화
-class ChatPage2(Page):
+class Chatpage2(Page):
     @staticmethod
     def vars_for_template(player: Player):
         # 대화2 전용 로그를 불러옵니다.
@@ -249,14 +249,14 @@ class ChatPage2(Page):
             return {player.id_in_group: {'error': str(e)}}
 
 #두번째 대화 응답
-class ChatPage2_answer(Page):
+class Chatpage2_answer(Page):
     """6문항 설문 페이지"""
     form_model = 'player'
     # 저장할 필드 목록
     form_fields = ['q2_1', 'q2_2', 'q2_3', 'q2_4', 'q2_5', 'q2_6','q2_feedback']
 
 #세번째 대화
-class ChatPage3(Page):
+class Chatpage3(Page):
     @staticmethod
     def vars_for_template(player: Player):
         # 화면(HTML)에 기존 대화 기록을 보여주기 위해 JSON 문자열을 리스트로 변환합니다.
@@ -339,7 +339,7 @@ class ChatPage3(Page):
             return {player.id_in_group: {'error': str(e)}}
 
 #세번째 대화 응답
-class ChatPage3_answer(Page):
+class Chatpage3_answer(Page):
     """6문항 설문 페이지"""
     form_model = 'player'
     # 저장할 필드 목록
@@ -347,7 +347,7 @@ class ChatPage3_answer(Page):
 
 
 # 네 번째 대화
-class ChatPage4(Page):
+class Chatpage4(Page):
     @staticmethod
     def vars_for_template(player: Player):
         return dict(history=json.loads(player.chat_log4))
@@ -410,10 +410,10 @@ class ChatPage4(Page):
             return {player.id_in_group: {'error': str(e)}}
 
 # 네 번째 대화 응답
-class ChatPage4_answer(Page):
+class Chatpage4_answer(Page):
     form_model = 'player'
     form_fields = ['q4_1', 'q4_2', 'q4_3', 'q4_4', 'q4_5', 'q4_6', 'q4_feedback']
 
 
-page_sequence = [Introduction, ScriptIntro1, Chatpage1,Chatpage1_answer, ChatPage2, ChatPage2_answer, ChatPage3, 
-                 ChatPage3_answer, ChatPage4, ChatPage4_answer, EndPage]
+page_sequence = [Introduction, ScriptIntro1, Chatpage1,Chatpage1_answer, Chatpage2, Chatpage2_answer, Chatpage3, 
+                 Chatpage3_answer, Chatpage4, Chatpage4_answer, EndPage]

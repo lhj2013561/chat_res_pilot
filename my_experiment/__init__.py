@@ -261,7 +261,7 @@ class Chatpage3(Page):
     def vars_for_template(player: Player):
         # 화면(HTML)에 기존 대화 기록을 보여주기 위해 JSON 문자열을 리스트로 변환합니다.
         return dict(history=json.loads(player.chat_log3))
-lghlrkgdhlk
+
     @staticmethod
     def live_method(player: Player, data):
         # 1. API 키 확인 (setx로 등록한 윈도우 환경 변수에서 가져옵니다)

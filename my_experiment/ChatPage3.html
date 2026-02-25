@@ -1,0 +1,130 @@
+{% extends "otree/Page.html" %}
+{% block content %}
+
+<style>
+    /* AI 메시지: 텍스트는 짙은 회색, 배경은 눈이 편안한 연한 회색/파스텔톤 */
+    .ai-msg-style { 
+        color: #333333; 
+        background-color: #ebf0f5; 
+        padding: 12px 15px; 
+        border-radius: 8px; 
+        margin-bottom: 10px; 
+    }
+    
+    /* 참여자(나) 메시지: 흰색 배경에 얇은 테두리로 AI와 깔끔하게 구분 */
+    .user-msg-style { 
+        color: #333333; 
+        background-color: #ffffff; 
+        padding: 12px 15px; 
+        border-radius: 8px; 
+        border: 1px solid #e0e0e0; 
+        margin-bottom: 10px; 
+    }
+    
+    /* 시스템 메시지: 가운데 정렬 추가 */
+    .system-msg-style { 
+        color: #888888; 
+        font-style: italic; 
+        font-size: 0.9em; 
+        margin-bottom: 10px; 
+        text-align: center; 
+    }
+</style>
+
+<h3>당신이 해당 시나리오의 주인공이라 생각하고 당신의 감정을 AI에게 표현해보세요 (현재: {{ player.chat_count3 }}/3회)</h3>
+
+<div id="chatbox" style="border:1px solid #ccc;height:400px;overflow:auto;padding:15px;background-color: #f9f9f9; border-radius: 10px;">
+    {% for m in history %}
+        <div class="{% if m.role == 'user' %}user-msg-style{% else %}ai-msg-style{% endif %}">
+            <b>{% if m.role == 'user' %}나:{% else %}AI:{% endif %}</b> {{ m.content }}
+        </div>
+    {% endfor %}
+</div>
+
+<br>
+
+<div id="input_container" {% if player.chat_count3 >= 3 %}style="display:none"{% endif %}>
+    <input id="user_input" type="text" style="width:80%" placeholder="메시지를 입력하세요..." class="form-control d-inline">
+    <button id="sendBtn" type="button" class="btn btn-primary">보내기</button>
+</div>
+
+<div id="finish_msg" {% if player.chat_count3 < 3 %}style="display:none"{% endif %}>
+    <div class="alert alert-info">3회 대화가 모두 완료되었습니다. 아래 버튼을 눌러주세요.</div>
+</div>
+
+<button class="otree-btn-next btn btn-success" id="nextBtn" {% if player.chat_count3 < 3 %}style="display:none"{% endif %}>다음 단계로 이동</button>
+
+<script>
+    let ai_turns = {{ player.chat_count3 }};
+    const MAX_TURNS = 3; 
+
+    const input = document.getElementById("user_input");
+    const sendBtn = document.getElementById("sendBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const chatbox = document.getElementById("chatbox");
+    const inputContainer = document.getElementById("input_container");
+    const finishMsg = document.getElementById("finish_msg");
+
+    function liveRecv(data) {
+        const loading = document.getElementById("loading-msg");
+        if (loading) loading.remove();
+
+        if (data.ai_text) {
+            ai_turns = data.count;
+            append("AI", data.ai_text, "ai-msg-style");
+            
+            if (ai_turns >= MAX_TURNS) {
+                append("SYSTEM", "대화가 종료되었습니다.", "system-msg-style");
+                nextBtn.style.display = "inline";
+                inputContainer.style.display = "none";
+                finishMsg.style.display = "block";
+            } else {
+                input.disabled = false;
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        } else if (data.error) {
+            append("SYSTEM", "오류: " + data.error, "system-msg-style");
+            input.disabled = false;
+            sendBtn.disabled = false;
+        }
+    }
+
+    function sendMessage() {
+        let text = input.value.trim();
+        if (text === "" || ai_turns >= MAX_TURNS) return;
+
+        input.disabled = true;
+        sendBtn.disabled = true;
+
+        append("나", text, "user-msg-style");
+        input.value = "";
+
+        const loadingMsg = append("SYSTEM", "AI가 답변을 생성 중입니다...", "system-msg-style");
+        loadingMsg.id = "loading-msg";
+
+        liveSend({'text': text});
+    }
+
+    function append(who, msg, className) {
+        const line = document.createElement("div");
+        line.className = className;
+        line.innerHTML = "<b>" + who + ":</b> " + msg;
+        chatbox.appendChild(line);
+        chatbox.scrollTop = chatbox.scrollHeight;
+        return line;
+    }
+
+    sendBtn.onclick = sendMessage;
+    input.onkeydown = function(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            sendMessage();
+        }
+    };
+
+    window.onload = function() {
+        chatbox.scrollTop = chatbox.scrollHeight;
+    };
+</script>
+{% endblock %}

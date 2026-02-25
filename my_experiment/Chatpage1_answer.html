@@ -1,0 +1,124 @@
+{% extends "otree/Page.html" %}
+{% block content %}
+
+<style>
+    /* 문항별 카드 스타일 */
+    .question-card {
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .question-text {
+        font-weight: bold;
+        font-size: 1.1em;
+        margin-bottom: 15px;
+        display: block;
+    }
+
+    /* 라디오 버튼을 가로로 정렬하되 모바일에서 줄바꿈 허용 */
+    .likert-options {
+        display: flex;
+        justify-content: space-between;
+        gap: 5px;
+        text-align: center;
+    }
+
+    .option-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .option-item input {
+        width: 22px;
+        height: 22px;
+        cursor: pointer;
+    }
+
+    .option-label {
+        font-size: 0.75em;
+        color: #666;
+        margin-top: 8px;
+        line-height: 1.2;
+    }
+
+    /* 모바일에서 글자가 너무 빽빽하면 간격 조정 */
+    @media (max-width: 576px) {
+        .option-label { font-size: 0.7em; }
+    }
+
+    /* 서술형 입력창(Textarea) 스타일링 */
+    .feedback-container textarea {
+        width: 100%;
+        height: 120px;
+        padding: 12px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        resize: none; /* 사용자가 크기를 마음대로 조절하지 못하게 고정 */
+    font-size: 1em;
+    }
+
+    .feedback-container textarea:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+</style>
+
+
+
+<h3>대화 경험 설문</h3>
+<p class="text-muted">방금 나눈 대화에 대해 솔직하게 응답해 주세요.</p>
+
+<div class="survey-container">
+    {% for field in form %}
+    <div class="question-card">
+        <label class="question-text">{{ field.label }}</label>
+        
+        {# 1. 서술형 문항(feedback) 처리: 이름에 'feedback'이 포함된 경우 #}
+        {% if "feedback" in field.name %}
+            <div class="feedback-container">
+                {{ field }}
+                <small class="text-muted" style="display: block; margin-top: 8px; color: #888;">
+                    * 이상한점이나 추가 의견 부탁드립니다.
+                </small>
+            </div>
+
+        {# 2. 객관식 문항(q1_1 등) 처리 #}
+        {% else %}
+            <div class="likert-options">
+                <div class="option-item">
+                    <input type="radio" name="{{ field.name }}" value="1" required>
+                    <span class="option-label">(1)<br>전혀<br>아니다</span>
+                </div>
+                <div class="option-item">
+                    <input type="radio" name="{{ field.name }}" value="2" required>
+                    <span class="option-label">(2)<br>아니다</span>
+                </div>
+                <div class="option-item">
+                    <input type="radio" name="{{ field.name }}" value="3" required>
+                    <span class="option-label">(3)<br>보통이다</span>
+                </div>
+                <div class="option-item">
+                    <input type="radio" name="{{ field.name }}" value="4" required>
+                    <span class="option-label">(4)<br>그렇다</span>
+                </div>
+                <div class="option-item">
+                    <input type="radio" name="{{ field.name }}" value="5" required>
+                    <span class="option-label">(5)<br>매우<br>그렇다</span>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<button class="otree-btn-next btn btn-success btn-lg w-100 mt-4">다음으로</button>
+
+{% endblock %}

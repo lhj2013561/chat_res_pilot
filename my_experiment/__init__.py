@@ -87,7 +87,7 @@ class ScriptIntro1(Page):
     pass
 
 #첫 대화
-class ChatPage1(Page):
+class Chatpage1(Page):
     @staticmethod
     def vars_for_template(player: Player):
         # 화면(HTML)에 기존 대화 기록을 보여주기 위해 JSON 문자열을 리스트로 변환합니다.
@@ -170,7 +170,7 @@ class ChatPage1(Page):
             return {player.id_in_group: {'error': str(e)}}
 
 #첫 대화 응답
-class ChatPage1_answer(Page):
+class Chatpage1_answer(Page):
     """6문항 설문 페이지"""
     form_model = 'player'
     # 저장할 필드 목록
@@ -415,5 +415,5 @@ class ChatPage4_answer(Page):
     form_fields = ['q4_1', 'q4_2', 'q4_3', 'q4_4', 'q4_5', 'q4_6', 'q4_feedback']
 
 
-page_sequence = [Introduction, ScriptIntro1, ChatPage1,ChatPage1_answer, ChatPage2, ChatPage2_answer, ChatPage3, 
+page_sequence = [Introduction, ScriptIntro1, Chatpage1,Chatpage1_answer, ChatPage2, ChatPage2_answer, ChatPage3, 
                  ChatPage3_answer, ChatPage4, ChatPage4_answer, EndPage]

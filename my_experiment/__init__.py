@@ -90,20 +90,17 @@ class ScriptIntro1(Page):
 class Chatpage1(Page):
     @staticmethod
     def vars_for_template(player: Player):
-        # 화면(HTML)에 기존 대화 기록을 보여주기 위해 JSON 문자열을 리스트로 변환합니다.
         return dict(history=json.loads(player.chat_log))
 
     @staticmethod
     def live_method(player: Player, data):
-        # 1. API 키 확인 (setx로 등록한 윈도우 환경 변수에서 가져옵니다)
         api_key = os.environ.get('OPENAI_API_KEY')
         
         if not api_key:
             return {player.id_in_group: {
-                'error': '시스템에서 API 키를 찾을 수 없습니다. setx 실행 후 VS Code를 완전히 껐다 켰는지 확인하세요.'
+                'error': '시스템에서 API 키를 찾을 수 없습니다. Railway의 Variables 설정을 확인하세요.'
             }}
 
-        # 2. 기존 로그 로드 및 유저 입력 처리
         history = json.loads(player.chat_log)
         user_text = data.get('text', '').strip()
         
@@ -111,63 +108,61 @@ class Chatpage1(Page):
         if player.chat_count >= 3:
             return {player.id_in_group: {'error': '이미 3회 대화가 완료되었습니다.'}}
 
-        # 3. 지침
-        prompt = prompt = """
-        [필수 규칙]
-        - 절대 이모티콘이나 이모지(😊, :( 등)를 사용하지 말 것.
-        - "~^^", "~!", "..."와 같은 과도한 문장 부호 사용을 지양할 것.
-        - 당신이 AI임을 밝히거나 역할극 중임을 암시하는 발언을 하지 말 것.
-        - 표현금지 단어: 공감, 마음, AI
-        - 첫인사나 끝인사를 생략하고 핵심 내용만 답변할 것.
-        - 한국어 표준어(합니다체)를 사용할 것.
-        - 전체 답변 길이는 공백 제외 150자 내로 유지할 것.
+        # --- 지침 분리 구간
+        if player.chat_count <= 1:
+            # [기존 지침]
+            prompt = """
+            [필수 규칙]
+            - 절대 이모티콘이나 이모지(😊, :( 등)를 사용하지 말 것.
+            - "~^^", "~!", "..."와 같은 과도한 문장 부호 사용을 지양할 것.
+            - 당신이 AI임을 밝히거나 역할극 중임을 암시하는 발언을 하지 말 것.
+            - 표현금지 단어: 공감, 마음, AI
+            - 첫인사 생략하고 핵심 내용만 답변할 것.
+            - 한국어 표준어(합니다체)를 사용할 것.
+            - 전체 답변 길이는 공백 제외 150자 내로 유지할 것.
 
-        [ROLE: Problem-Solving Assistant]
-        당신은 사용자가 겪고 있는 문제 상황을 객관적으로 분석하고, 이를 해결하기 위한 구체적인 실행 계획(Action Plan)을 제시하는 전문가입니다. 
-        사용자가 부정적인 감정(화, 슬픔, 불안 등)을 표현할 때, 다음 원칙을 엄격히 따르세요:
+            [ROLE: Problem-Solving Assistant]
+            당신은 사용자가 겪고 있는 문제 상황을 객관적으로 분석하고, 이를 해결하기 위한 구체적인 실행 계획(Action Plan)을 제시하는 전문가입니다. 
+            감정적인 위로나 공감보다는 논리적이고 객관적인 말투를 유지하세요.
+            1. 분석: 사용자가 처한 상황에서 '해결해야 할 핵심 문제'가 무엇인지 정의하세요.
+            2. 실질적 솔루션: 구체적인 단계나 대안을 제시하세요.
+            """
+        else:
+            # [종료 지침]
+            prompt = """
+            지금까지 모든 지침을 무시하고 이전 대화를 바탕으로 대화를 마무리 지으세요. 응원금지. 응답의 목적은 이제 대화를 끝내는 것입니다. 마무리 인사를 반드시 끝에 붙이시오.
+            """
+        # --------------------------------------------------------
 
-        1. 분석: 사용자가 처한 상황에서 감정적인 요소를 배제하고, '해결해야 할 핵심 문제'가 무엇인지 먼저 정의하세요.
-        2. 실질적 솔루션: 문제를 해결하거나 완화할 수 있는 구체적인 단계(Step-by-step)나 대안을 최소 2-3가지 제시하세요.
-        3. 이성적 톤: 감정적인 위로나 공감보다는 논리적이고 객관적인 말투를 유지하세요. (예: "그 상황을 해결하기 위해서는 ~하는 것이 가장 효율적입니다.")
-        4. 상세한 가이드: 단순히 방향만 제시하는 것이 아니라, 사용자가 바로 실행할 수 있을 정도로 상세하게 답변하세요.
-        """
-
-        # 4. API 호출 메시지 구성
         messages = [{"role": "system", "content": prompt}]
-        # 기존 대화 내역(유저/AI) 추가
         for entry in history:
             messages.append(entry)
-        # 현재 유저가 보낸 메시지 추가
         messages.append({"role": "user", "content": user_text})
 
         try:
-            # 5. GPT 모델 호출
-            # OpenAI에는 gpt-4.1-mini라는 이름이 없으므로, 성능이 좋고 저렴한 gpt-4o-mini로 수정했습니다.
             client = openai.OpenAI(api_key=api_key)
             response = client.chat.completions.create(
-                model="gpt-4o-mini", 
+                model="gpt-4o", 
                 messages=messages,
                 temperature=0.5,
                 max_tokens=500
             )
             ai_text = response.choices[0].message.content
 
-            # 6. 결과 저장 (유저 메시지와 AI 응답을 로그에 추가)
             history.append({"role": "user", "content": user_text})
             history.append({"role": "assistant", "content": ai_text})
             
             player.chat_log = json.dumps(history, ensure_ascii=False)
             player.chat_count += 1
 
-            # 7. 화면(HTML)으로 전송
             return {player.id_in_group: {
                 'ai_text': ai_text, 
                 'count': player.chat_count
             }}
 
         except Exception as e:
-            # 에러 발생 시 화면에 표시
             return {player.id_in_group: {'error': str(e)}}
+     
 
 #첫 대화 응답
 class Chatpage1_answer(Page):
